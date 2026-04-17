@@ -20,7 +20,11 @@ const Login = () => {
       const response = await api.post('/auth/login', { email, password });
       login(response.user, response.token);
     } catch (err) {
-      setError(err.error || err.message || 'Invalid credentials');
+      if (err.isNetworkError) {
+        setError('Master Server is waking up. Please wait 30-40 seconds and try again.');
+      } else {
+        setError(err.error || err.message || 'Invalid credentials');
+      }
     } finally {
       setLoading(false);
     }

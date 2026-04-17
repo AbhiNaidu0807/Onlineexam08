@@ -1,19 +1,32 @@
 import axios from 'axios';
 
-// Dynamically resolve the API link for cross-device synchronization
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://onlineexam08.onrender.com/api';
+// ULTIMATE NETWORK RESOLUTION ENGINE
+const getApiBase = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  
+  // If we have an environment variable and it's not a placeholder, use it
+  if (envUrl && envUrl !== 'http://localhost:5000/api' && envUrl.length > 0) {
+    return envUrl;
+  }
+  
+  // Hardcoded production fallback for the Eagle Exam Master Server
+  return 'https://onlineexam08.onrender.com/api';
+};
+
+const API_BASE_URL = getApiBase();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 30000, // 30s timeout to allow for Render "cold starts"
 });
+
+console.log(`[SYSTEM] Intelligence link established at: ${API_BASE_URL}`);
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  // Log outgoing request for terminal audit
-  console.log(`[NETWORK] Outgoing request to: ${config.baseURL}${config.url}`);
   return config;
 });
 
@@ -25,11 +38,14 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    // Advanced error resolution for cross-device accessibility
+    // Audit logs for student device debugging
+    console.error('[INSTITUTIONAL ERROR] Target:', error.config?.url);
+    console.error('[INSTITUTIONAL ERROR] Base:', API_BASE_URL);
+    
     if (!error.response) {
-      console.error('[NETWORK ERROR] Server unreachable. Current API Base:', API_BASE_URL);
+      // This is a zero-response error (DNS failure, CORS block, or Server Offline)
       return Promise.reject({ 
-        message: 'Master server unreachable. Please verify institutional network connection.',
+        message: 'Master server unreachable. Render instances may take 40s to wake up on first access.', 
         isNetworkError: true 
       });
     }
