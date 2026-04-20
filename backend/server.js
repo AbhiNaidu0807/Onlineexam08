@@ -22,12 +22,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-// Global CORS Configuration
 app.use(cors({
-  origin: '*', // Allows synchronization from Vercel and local mobile devices
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  origin: [
+    'http://localhost:5173',
+    'https://onlineexam08.vercel.app',
+    'https://onlineexam08.onrender.com'
+  ],
+  credentials: true
 }));
+
+// Fallback for debugging if needed:
+// app.use(cors()); 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));

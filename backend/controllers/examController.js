@@ -3,12 +3,26 @@ import { successResponse, errorResponse } from '../utils/response.js';
 import { createNotification } from './notificationController.js';
 
 export const getExams = async (req, res) => {
+  const { search } = req.query;
   try {
     let sql = `SELECT e.*, (SELECT COUNT(*) FROM questions q WHERE q.exam_id = e.id) as question_count FROM exams e`;
+    let args = [];
+    
+    let whereClauses = [];
     if (req.user.role === 'student') {
-      sql += ' WHERE e.is_published = 1';
+      whereClauses.push('e.is_published = 1');
     }
-    const result = await client.execute(sql);
+    
+    if (search) {
+      whereClauses.push('e.title LIKE ?');
+      args.push(`%${search}%`);
+    }
+    
+    if (whereClauses.length > 0) {
+      sql += ' WHERE ' + whereClauses.join(' AND ');
+    }
+    
+    const result = await client.execute({ sql, args });
     return successResponse(res, result.rows);
   } catch (error) {
     return errorResponse(res, error, 'Server Error');

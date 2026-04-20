@@ -1,183 +1,93 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-serif: "Times New Roman", Times, serif;
-  --font-display: "Times New Roman", Times, serif;
-  --color-primary: #1E3A5F;
-  --color-secondary: #f97316;
 }
-
-@variant dark (&:where(.dark, .dark *));
 
 :root {
-  --primary: #1E3A5F;
-  --primary-rgb: 30, 58, 95;
-  --secondary: #64748b;
-  --accent: #f97316;
+  --primary: #1a237e;
+  --secondary: #37474f;
   --bg-main: #ffffff;
-  --bg-alt: #f1f5f9;
-  --text-main: #0f172a;
-  --text-muted: #475569;
-  --border-color: #cbd5e1;
-  
-  font-family: "Times New Roman", Times, serif;
-  line-height: 1.6;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.dark:root {
-  --bg-main: #0f172a;
-  --bg-alt: #1e293b;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border-color: #334155;
-  background-color: var(--bg-main);
+  --bg-alt: #f5f5f5;
+  --border-color: #e0e0e0;
 }
 
 * {
-  box-sizing: border-box;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: "Times New Roman", Times, serif;
-  color: var(--text-main);
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-h1 { font-size: 26px; }
-h2 { font-size: 20px; }
-h3 { font-size: 18px; }
-
-p, span, div {
-  font-size: 16px;
+  font-family: "Times New Roman", Times, serif !important;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-}
-
-/* Institutional Components */
-
-.card {
-  background-color: #ffffff;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-}
-
-.dark .card {
   background-color: var(--bg-alt);
-  border-color: var(--border-color);
+  color: #333;
+  font-size: 14px;
 }
 
-.card:hover {
-  border-color: var(--primary);
-}
+h1 { font-size: 22px; font-weight: bold; }
+h2 { font-size: 18px; font-weight: bold; }
+h3 { font-size: 16px; font-weight: bold; }
 
-.btn-primary {
-  padding: 0.6rem 1.25rem;
-  background-color: var(--primary);
+/* Formal Button */
+.btn-formal {
+  background: var(--primary);
   color: white;
+  padding: 8px 16px;
   border-radius: 4px;
-  font-weight: 600;
-  font-family: "Times New Roman", Times, serif;
-  transition: all 0.2s;
+  font-weight: bold;
+  border: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border: none;
-  font-size: 15px;
+  gap: 8px;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
-.btn-primary:hover {
-  background-color: #162c4a;
+.btn-formal:hover {
+  background: #0d1440;
 }
 
-.btn-secondary {
-  padding: 0.6rem 1.25rem;
-  background-color: var(--secondary);
-  color: white;
-  border-radius: 4px;
-  font-weight: 600;
-  font-family: "Times New Roman", Times, serif;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none;
-  font-size: 15px;
-}
-
-.input-field {
+/* Formal Table */
+.table-formal {
   width: 100%;
-  padding: 0.6rem 1rem;
-  border-radius: 4px;
+  border-collapse: collapse;
+  background: white;
   border: 1px solid var(--border-color);
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  transition: all 0.2s;
+}
+
+.table-formal th {
+  background: var(--bg-alt);
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--border-color);
+  font-size: 14px;
+  color: var(--secondary);
+}
+
+.table-formal td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+/* Clean Form Input */
+.input-formal {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  border-radius: 4px;
   outline: none;
-  font-family: inherit;
+  font-size: 14px;
 }
 
-.input-field:focus {
+.input-formal:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--primary);
 }
 
-/* Formal Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
+/* Transitions */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 0px;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-/* Standard Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
-}
-

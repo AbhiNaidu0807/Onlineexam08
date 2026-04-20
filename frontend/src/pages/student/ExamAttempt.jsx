@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
 import { useExams } from '../../hooks/useExams';
@@ -8,18 +8,14 @@ import {
   ChevronLeft, 
   ChevronRight, 
   ShieldCheck,
-  Zap,
   Play,
   FileText,
   AlertTriangle,
   Flag,
   Terminal,
-  Monitor,
-  CheckCircle2,
+  CheckCircle,
   XCircle,
-  Database,
   Code2,
-  Layout,
   Table as TableIcon
 } from 'lucide-react';
 
@@ -75,7 +71,7 @@ const ExamAttempt = () => {
         if (savedFlags) setFlagged(JSON.parse(savedFlags));
 
       } catch (err) {
-        setError(err.message || 'Identity verification failed. Access denied.');
+        setError(err.message || 'Authorization failure accessing the examination portal.');
       } finally {
         setLoading(false);
       }
@@ -118,11 +114,10 @@ const ExamAttempt = () => {
 
   const submitExam = async (isAuto = false, reason = 'MANUAL') => {
     if (isSubmitting) return;
-    if (!isAuto && !window.confirm("Finalize assessment and commit sequence to cloud?")) return;
+    if (!isAuto && !window.confirm("Are you sure you want to finalize and submit your examination?")) return;
 
     setIsSubmitting(true);
     try {
-      // Pass all answers directly as a fail-safe in case background sync lagged
       await api.post('/attempts/submit', { attemptId, isAuto, reason, answers });
       localStorage.removeItem(`exam_ans_${attemptId}`);
       localStorage.removeItem(`exam_flags_${attemptId}`);
@@ -130,7 +125,7 @@ const ExamAttempt = () => {
       navigate(`/student/result/${attemptId}`);
     } catch (err) {
       setIsSubmitting(false);
-      alert("Comms failure: " + err.message);
+      alert("Submission Error: " + err.message);
     }
   };
 
@@ -142,38 +137,14 @@ const ExamAttempt = () => {
 
   const runCode = async () => {
     setIsExecuting(true);
-    setCodeOutput('Initializing secure sandbox environment...\n');
-    
-    // Simulate execution latency
+    setCodeOutput('Compiling code in authorized environment...\n');
     setTimeout(() => {
       const q = questions[currentIndex];
       const ans = answers[q.id];
-      const code = typeof ans === 'object' ? ans.code : ans;
       const lang = typeof ans === 'object' ? ans.lang : (q.language || 'javascript');
-
-      if (lang === 'html' || lang === 'css' || lang === 'react') {
-        setCodeOutput('Rendering live preview sequence...');
-      } else if (lang === 'sql') {
-        setCodeOutput('Query executed. Result: 14 rows returned.');
-      } else {
-        setCodeOutput(`Execution complete.\n\n$ ${lang} script.run\n> System initialized\n> Processing logic...\n> Output: 42\n\nExecution Time: 124ms`);
-      }
+      setCodeOutput(`Execution Success.\n\n$ ${lang} run\n> Output: Standard response delivered.\n\nTime: 85ms`);
       setIsExecuting(false);
-    }, 1500);
-  };
-
-  const runTests = async () => {
-    setIsExecuting(true);
-    setCodeOutput('Loading encrypted test vectors...\n');
-    
-    setTimeout(() => {
-      setTestResults([
-        { id: 1, name: 'Initial Handshake', status: 'passed', expected: '1', actual: '1' },
-        { id: 2, name: 'Data Flow Compression', status: 'passed', expected: 'true', actual: 'true' },
-        { id: 3, name: 'Boundary Condition Edge', status: 'failed', expected: 'error-null', actual: '0' },
-      ]);
-      setIsExecuting(false);
-    }, 2000);
+    }, 1200);
   };
 
   const formatTime = (seconds) => {
@@ -194,39 +165,47 @@ const ExamAttempt = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 font-serif">
-       <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-       <p className="text-sm font-black text-gray-400 uppercase tracking-[0.3em]">Synching with Assessment Node...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white font-serif">
+       <div className="w-12 h-12 border-4 border-[#1a237e] border-t-transparent rounded-full animate-spin mb-6"></div>
+       <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest">Authorized Access in Progress...</p>
     </div>
   );
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 font-serif">
-        <div className="max-w-xl w-full bg-white dark:bg-gray-800 rounded-[2rem] p-12 shadow-xl border border-gray-100 dark:border-white/5 text-center space-y-8 animate-fade-in">
-           <div className="w-20 h-20 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-              <ShieldCheck className="w-10 h-10 text-orange-500" />
+      <div className="min-h-screen bg-[#fafafa] flex items-center justify-center p-6 font-serif">
+        <div className="max-w-2xl w-full bg-white border border-[#e0e0e0] p-12 text-center space-y-10 shadow-sm">
+           <div className="w-20 h-20 bg-[#1a237e] text-white rounded-sm flex items-center justify-center mx-auto">
+              <ShieldCheck size={40} />
            </div>
-           <h1 className="text-3xl font-bold font-display text-gray-900 dark:text-white tracking-tight leading-tight">{exam?.title || 'Security Protocol'} Entry</h1>
-           <div className="bg-orange-50 dark:bg-orange-500/10 p-6 rounded-2xl border border-orange-100 dark:border-orange-500/20 text-left">
-              <p className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-widest mb-4">Environment Status:</p>
-              <ul className="space-y-3 text-sm font-bold text-gray-700">
-                 <li className="flex items-center gap-2 pr-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" /> Proctoring Sensor Active
+           <div className="space-y-2">
+              <h1 className="text-[22px] font-bold text-[#1a237e] uppercase tracking-tight">{exam?.title || 'Examination Center'}</h1>
+              <p className="text-[14px] text-gray-500 italic">Candidate Identity Verification Successful. Access Granted.</p>
+           </div>
+           
+           <div className="bg-gray-50 p-8 border border-gray-100 text-left space-y-6">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-2">Institutional Instructions:</p>
+              <ul className="space-y-4 text-[14px] text-gray-700">
+                 <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                    <span>Active proctoring is enabled. Your session is being monitored for compliance with institutional regulations.</span>
                  </li>
-                 <li className="flex items-center gap-2 pr-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" /> Multi-language Sandbox Initialized
+                 <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                    <span>The examination consists of {questions.length} questions. You can navigate between questions using the palette.</span>
                  </li>
-                 <li className="flex items-center gap-2 pr-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" /> RSA-256 Cloud Sync Ready
+                 <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                    <span>Ensure a stable connection. All progress is synchronized in real-time with the master database.</span>
                  </li>
               </ul>
            </div>
+
            <button 
              onClick={() => setStarted(true)}
-             className="w-full py-5 bg-gray-900 dark:bg-orange-600 text-white rounded-xl font-bold text-lg hover:filter hover:brightness-110 transition-all shadow-lg active:scale-95"
+             className="w-full bg-[#1a237e] text-white py-4 font-bold text-[16px] uppercase tracking-widest hover:bg-[#0d1440] transition-colors shadow-md"
            >
-             Start Assessment
+             Begin Certified Assessment
            </button>
         </div>
       </div>
@@ -239,68 +218,55 @@ const ExamAttempt = () => {
   const userCode = typeof currentAns === 'object' ? currentAns.code : (currentAns || '');
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col font-serif">
       <ProctoringControl isExamActive={started && !isSubmitting} onViolation={handleViolation} />
       
       {showViolationWarning && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[999] bg-rose-600 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 animate-bounce border-2 border-white">
-           <AlertTriangle className="w-5 h-5" />
-           <p className="font-bold uppercase tracking-widest text-xs">{showViolationWarning}</p>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-red-600 text-white px-8 py-4 rounded-sm shadow-2xl flex items-center gap-4 border-2 border-white animate-pulse">
+           <AlertTriangle size={20} />
+           <p className="font-bold uppercase tracking-widest text-[12px]">{showViolationWarning}</p>
         </div>
       )}
 
-      {/* Header */}
-      <header className="h-20 border-b border-gray-100 dark:border-white/5 sticky top-0 z-50 px-8 flex items-center justify-between bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl transition-colors">
-          <div className="flex items-center gap-6">
-             <Link to="/student" className="hover:scale-105 transition-transform shrink-0">
-                <Logo size={50} />
+      {/* Official Header */}
+      <header className="h-16 border-b border-[#e0e0e0] sticky top-0 z-50 px-8 flex items-center justify-between bg-white/95 backdrop-blur-sm">
+          <div className="flex items-center gap-8">
+             <Link to="/student" className="shrink-0">
+                <Logo size={40} />
              </Link>
-             <div className="w-1.5 h-8 bg-gray-100 dark:bg-gray-800 rounded-full"></div>
-             <div className="w-11 h-11 bg-gray-900 dark:bg-orange-600 text-white rounded-xl flex items-center justify-center font-bold text-lg">
-                {currentIndex + 1}
+             <div className="h-8 w-px bg-gray-200"></div>
+             <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Standardized Assessment Progress</p>
+                <p className="text-[15px] font-bold text-[#1a237e]">Question {currentIndex + 1} of {questions.length}</p>
              </div>
-            <div>
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Question Progress</p>
-               <div className="flex items-center gap-3">
-                  <div className="h-1.5 w-40 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                     <div className="h-full bg-orange-500 transition-all duration-700" style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}></div>
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-400">{currentIndex + 1}/{questions.length}</span>
-               </div>
-            </div>
          </div>
 
-         <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
-               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-               <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Active Connection</span>
+         <div className="flex items-center gap-10">
+            <div className={`flex items-center gap-3 px-6 py-1.5 border rounded-sm ${timeLeft < 300 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+               <Clock size={18} className={timeLeft < 300 ? 'text-red-500' : 'text-[#1a237e]'} />
+               <span className={`text-[18px] font-bold ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-900'}`}>{formatTime(timeLeft)}</span>
             </div>
 
-            <div className={`flex items-center gap-3 px-6 py-2 rounded-xl border transition-all ${timeLeft < 300 ? 'bg-rose-50 border-rose-200 animate-pulse' : 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/5'}`}>
-               <Clock className={`w-5 h-5 ${timeLeft < 300 ? 'text-rose-500' : 'text-gray-400'}`} />
-               <span className={`text-xl font-bold font-display ${timeLeft < 300 ? 'text-rose-600' : 'text-gray-900 dark:text-white'}`}>{formatTime(timeLeft)}</span>
-            </div>
-
-            <button onClick={() => submitExam()} className="bg-gray-900 dark:bg-orange-600 text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:filter hover:brightness-110 transition-all active:scale-95 shadow-md">
-              Finish
+            <button onClick={() => submitExam()} className="bg-[#1a237e] text-white px-8 py-2 font-bold text-[13px] uppercase tracking-widest hover:bg-[#0d1440] transition-colors">
+              Submit Assessment
             </button>
          </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-         {/* Question Palette Sidebar */}
-         <aside className="w-80 border-r border-gray-100 p-8 flex flex-col gap-10 overflow-y-auto">
+         {/* Navigation Palette */}
+         <aside className="w-80 border-r border-[#e0e0e0] p-10 flex flex-col gap-10 overflow-y-auto bg-[#fafafa]">
             <div className="space-y-6">
-               <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.5em] px-2 text-center">Navigator Palette</h3>
-               <div className="grid grid-cols-4 gap-3">
+               <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] text-center border-b border-gray-200 pb-2">Institutional Selector</h3>
+               <div className="grid grid-cols-4 gap-2">
                   {questions.map((q, i) => (
                     <button
                       key={q.id}
                       onClick={() => setCurrentIndex(i)}
-                      className={`h-14 rounded-xl font-black text-sm flex items-center justify-center transition-all ${
-                        currentIndex === i ? 'ring-4 ring-orange-100 border-orange-500 bg-orange-50 text-orange-600' : 
-                        flagged.includes(q.id) ? 'border-2 border-orange-500 text-orange-600 animate-pulse' :
-                        answers[q.id] ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-300'
+                      className={`h-11 rounded-sm font-bold text-[14px] flex items-center justify-center transition-all border ${
+                        currentIndex === i ? 'bg-[#1a237e] text-white border-[#1a237e]' : 
+                        flagged.includes(q.id) ? 'border-orange-500 text-orange-600 bg-orange-50' :
+                        answers[q.id] ? 'bg-gray-200 text-gray-800 border-gray-300' : 'bg-white text-gray-300 border-gray-100 hover:border-gray-300'
                       }`}
                     >
                       {i + 1}
@@ -309,55 +275,55 @@ const ExamAttempt = () => {
                </div>
             </div>
 
-            <div className="mt-auto space-y-6 bg-slate-50 rounded-3xl p-6 border border-gray-100">
-               <div className="flex items-center justify-between text-[10px] font-black uppercase text-gray-400">
-                  <span>Logic Coverage</span>
-                  <span>{Object.keys(answers).length}/{questions.length}</span>
+            <div className="mt-auto p-6 bg-white border border-gray-200 space-y-4">
+               <div className="flex items-center justify-between text-[11px] font-bold uppercase text-gray-400">
+                  <span>Completion Index</span>
+                  <span className="text-[#1a237e]">{Object.keys(answers).length} / {questions.length}</span>
                </div>
-               <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-gray-900 transition-all duration-1000" style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}></div>
+               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#1a237e] transition-all duration-500" style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}></div>
                </div>
             </div>
          </aside>
 
-         {/* Main Workspace */}
-         <main className="flex-1 overflow-y-auto bg-gray-50/30 p-12 lg:p-16 flex flex-col items-center">
-            <div className="max-w-5xl w-full space-y-12">
-               <div className="flex justify-between items-center px-4">
-                  <span className="bg-orange-100 text-orange-600 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                     {currentQ?.type?.toLowerCase() === 'mcq' ? <FileText className="w-4 h-4" /> : <Code2 className="w-4 h-4" />}
-                     SEGMENT TYPE: {currentQ?.type?.toUpperCase()}
+         {/* Content Area */}
+         <main className="flex-1 overflow-y-auto p-12 lg:p-20 flex flex-col items-center">
+            <div className="max-w-4xl w-full space-y-10">
+               <div className="flex justify-between items-center bg-[#f5f5f5] p-3 border border-gray-200">
+                  <span className="text-[11px] font-bold text-[#1a237e] uppercase tracking-widest flex items-center gap-2">
+                     {currentQ?.type?.toLowerCase() === 'mcq' ? <FileText size={16} /> : <Code2 size={16} />}
+                     Standard Question Item: {currentQ?.type?.toUpperCase()}
                   </span>
                   <button 
                     onClick={() => toggleFlag(currentQ?.id)}
-                    className={`flex items-center gap-3 font-black uppercase text-[10px] tracking-[0.2em] transition-all ${flagged.includes(currentQ?.id) ? 'text-orange-500' : 'text-gray-400'}`}
+                    className={`flex items-center gap-2 font-bold uppercase text-[11px] tracking-widest transition-all ${flagged.includes(currentQ?.id) ? 'text-orange-600' : 'text-gray-400 hover:text-gray-600'}`}
                   >
-                    <Flag className={`w-4 h-4 ${flagged.includes(currentQ?.id) ? 'fill-current' : ''}`} />
-                    {flagged.includes(currentQ?.id) ? 'Marked for Review' : 'Flag Fragment'}
+                    <Flag size={14} className={flagged.includes(currentQ?.id) ? 'fill-current' : ''} />
+                    {flagged.includes(currentQ?.id) ? 'Marked for Review' : 'Mark for Review'}
                   </button>
                </div>
 
-               <h2 className="text-4xl font-black text-gray-900 leading-[1.2] tracking-tight px-4 italic">
+               <h2 className="text-[20px] font-bold text-gray-800 leading-relaxed italic">
                   {currentQ?.question_text}
                </h2>
 
-               <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-2xl p-6 lg:p-10 transition-shadow hover:shadow-orange-100/30">
+               <div className="p-1">
                   {currentQ?.type?.toLowerCase() === 'mcq' && (
-                    <div className="grid gap-4">
+                    <div className="space-y-4">
                        {(typeof currentQ.options === 'string' ? JSON.parse(currentQ.options) : currentQ.options).map((opt, i) => (
                          <button
                            key={i}
                            onClick={() => handleAnswerChange(currentQ.id, opt)}
-                           className={`p-10 rounded-[2.5rem] text-left border-4 transition-all flex items-center gap-8 group ${
+                           className={`w-full p-6 text-left border-2 transition-all flex items-center gap-8 ${
                              answers[currentQ.id] === opt 
-                             ? 'border-gray-900 bg-gray-900 text-white shadow-2xl translate-x-4' 
-                             : 'border-gray-50 bg-gray-50/50 text-gray-700 hover:border-gray-100'
+                             ? 'border-[#1a237e] bg-[#f9f9ff] text-[#1a237e] font-bold' 
+                             : 'border-gray-100 bg-white text-gray-600 hover:bg-gray-50'
                            }`}
                          >
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl transition-all ${answers[currentQ.id] === opt ? 'bg-white/20' : 'bg-white text-gray-200'}`}>
+                            <div className={`w-8 h-8 rounded-sm flex items-center justify-center font-bold text-[14px] border ${answers[currentQ.id] === opt ? 'bg-[#1a237e] text-white border-[#1a237e]' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
                                {String.fromCharCode(65 + i)}
                             </div>
-                            <span className="text-2xl font-bold">{opt}</span>
+                            <span className="text-[16px]">{opt}</span>
                          </button>
                        ))}
                     </div>
@@ -365,144 +331,61 @@ const ExamAttempt = () => {
 
                   {currentQ?.type?.toLowerCase() === 'short' && (
                     <textarea 
-                      className="w-full min-h-[400px] p-12 bg-gray-50 border-4 border-gray-100 rounded-[3rem] focus:border-gray-900 outline-none text-2xl font-bold transition-all placeholder:text-gray-200"
-                      placeholder="Synthesise logic fragment here..."
+                      className="w-full min-h-[300px] p-10 bg-white border border-gray-200 rounded-sm focus:border-[#1a237e] outline-none text-[16px] leading-[1.8] italic placeholder:text-gray-300"
+                      placeholder="Candidate's official response..."
                       value={currentAns || ''}
                       onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
                     />
                   )}
 
                   {currentQ?.type?.toLowerCase() === 'coding' && (
-                    <div className="space-y-8">
-                       <div className="flex items-center justify-between bg-zinc-900 p-4 rounded-[2rem] shadow-xl">
-                          <div className="flex gap-2">
-                             {['javascript', 'python', 'java', 'sql', 'html', 'css', 'react'].map(lang => (
-                               <button 
-                                 key={lang}
-                                 onClick={() => handleAnswerChange(currentQ.id, { lang, code: userCode })}
-                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${userLang === lang ? 'bg-white text-zinc-900' : 'text-zinc-500 hover:text-zinc-300'}`}
-                               >
-                                 {lang}
-                               </button>
-                             ))}
-                          </div>
-                          <div className="flex gap-3">
-                             <button onClick={runCode} disabled={isExecuting} className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all shadow-lg shadow-emerald-500/30">
-                                <Play className="w-4 h-4 fill-current" /> Run Logic
-                             </button>
-                             <button onClick={runTests} disabled={isExecuting} className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 active:scale-95 transition-all shadow-lg shadow-orange-500/30">
-                                <Terminal className="w-4 h-4" /> Execute Multi-Tests
-                             </button>
-                          </div>
+                    <div className="space-y-6">
+                       <div className="flex items-center justify-between bg-gray-100 p-3">
+                          <p className="text-[11px] font-bold text-gray-600 uppercase tracking-widest">Programming Environment</p>
+                          <button onClick={runCode} disabled={isExecuting} className="flex items-center gap-2 px-6 py-2 bg-[#1a237e] text-white font-bold text-[11px] uppercase tracking-widest hover:bg-[#0d1440] transition-colors">
+                             <Play size={14} className="fill-current" /> Execute Logic
+                          </button>
                        </div>
                        
-                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                          <div className="h-[600px] rounded-[3rem] overflow-hidden border-4 border-zinc-900 shadow-2xl bg-zinc-900 transition-all hover:ring-8 hover:ring-orange-100">
-                             <Editor 
-                               height="100%"
-                               theme="vs-dark"
-                               language={userLang === 'react' ? 'javascript' : userLang}
-                               value={userCode}
-                               onChange={(v) => handleAnswerChange(currentQ.id, { lang: userLang, code: v })}
-                               options={{ fontSize: 16, fontFamily: 'Fira Code', minimap: { enabled: false }, padding: { top: 20 } }}
-                             />
-                          </div>
+                       <div className="h-[500px] border border-gray-200 shadow-inner">
+                          <Editor 
+                            height="100%"
+                            theme="light"
+                            language={userLang}
+                            value={userCode}
+                            onChange={(v) => handleAnswerChange(currentQ.id, { lang: userLang, code: v })}
+                            options={{ fontSize: 14, fontFamily: 'monospace', minimap: { enabled: false }, padding: { top: 10 } }}
+                          />
+                       </div>
 
-                          <div className="flex flex-col gap-6">
-                             {/* Preview Panel for Web Dev */}
-                             {(userLang === 'html' || userLang === 'css' || userLang === 'react') && (
-                                <div className="h-full min-h-[280px] bg-white rounded-[3rem] border-4 border-gray-100 flex flex-col overflow-hidden shadow-inner">
-                                   <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-                                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 italic"><Layout className="w-4 h-4" /> Web Viewport Shell</span>
-                                      <div className="flex gap-1.5">
-                                         <div className="w-2.5 h-2.5 bg-rose-400 rounded-full"></div>
-                                         <div className="w-2.5 h-2.5 bg-amber-400 rounded-full"></div>
-                                         <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full"></div>
-                                      </div>
-                                   </div>
-                                   <div className="flex-1 p-6 font-serif">
-                                      {userLang === 'html' && <div dangerouslySetInnerHTML={{ __html: userCode }} />}
-                                      {(userLang === 'css' || userLang === 'react') && <div className="flex flex-col items-center justify-center h-full text-gray-200 text-xs font-black uppercase">Live Render Initialized</div>}
-                                   </div>
-                                </div>
-                             )}
-
-                             {/* SQL Result Table Placeholder */}
-                             {userLang === 'sql' && (
-                                <div className="h-full min-h-[280px] bg-white rounded-[3rem] border-4 border-gray-100 flex flex-col overflow-hidden">
-                                   <div className="px-6 py-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-                                      <TableIcon className="w-4 h-4 text-orange-500" />
-                                      <span className="text-[10px] font-black uppercase text-gray-400">Query Output Matrix</span>
-                                   </div>
-                                   <div className="flex-1 overflow-auto">
-                                      <table className="w-full text-left text-xs">
-                                         <thead className="bg-gray-50 border-b border-gray-100">
-                                            <tr>
-                                               <th className="px-4 py-2 font-black uppercase text-gray-400">ID</th>
-                                               <th className="px-4 py-2 font-black uppercase text-gray-400">Field_A</th>
-                                               <th className="px-4 py-2 font-black uppercase text-gray-400">Value_B</th>
-                                            </tr>
-                                         </thead>
-                                         <tbody className="divide-y divide-gray-50 font-medium italic">
-                                            <tr><td className="px-4 py-2">001</td><td className="px-4 py-2">Handshake_Succ</td><td className="px-4 py-2">124.5</td></tr>
-                                            <tr><td className="px-4 py-2">002</td><td className="px-4 py-2">Protocol_Sync</td><td className="px-4 py-2">88.2</td></tr>
-                                         </tbody>
-                                      </table>
-                                   </div>
-                                </div>
-                             )}
-
-                             {/* Console Output */}
-                             <div className="h-full bg-zinc-950 rounded-[3rem] p-8 border-4 border-zinc-900 shadow-2xl relative">
-                                <span className="absolute top-4 right-10 text-[9px] font-black text-zinc-700 uppercase italic">Debug Console v4.2</span>
-                                <div className="flex items-center gap-2 mb-4 text-zinc-500">
-                                   <Terminal className="w-4 h-4" />
-                                   <p className="text-[10px] font-black uppercase tracking-widest">Compiler Stream</p>
-                                </div>
-                                <pre className="text-emerald-400 font-mono text-sm leading-relaxed whitespace-pre-wrap">
-                                   {codeOutput || (isExecuting ? 'Initializing System Kernel...' : 'Ready for instruction.')}
-                                </pre>
-                                
-                                {testResults && (
-                                  <div className="mt-8 pt-8 border-t border-zinc-800 space-y-4">
-                                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Test Vector Status</p>
-                                     <div className="grid grid-cols-1 gap-2">
-                                        {testResults.map(res => (
-                                          <div key={res.id} className="flex items-center justify-between bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
-                                             <div className="flex items-center gap-3">
-                                                {res.status === 'passed' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-rose-500" />}
-                                                <span className="text-[11px] font-bold text-zinc-300">{res.name}</span>
-                                             </div>
-                                             <span className={`text-[10px] font-black uppercase ${res.status === 'passed' ? 'text-emerald-500' : 'text-rose-500'}`}>{res.status}</span>
-                                          </div>
-                                        ))}
-                                     </div>
-                                  </div>
-                                )}
-                             </div>
-                          </div>
+                       <div className="bg-gray-900 p-6 font-mono text-[13px]">
+                          <p className="text-gray-500 mb-2 border-b border-gray-800 pb-1 text-[10px] uppercase font-bold tracking-widest">Output Window</p>
+                          <pre className="text-gray-300 whitespace-pre-wrap italic">
+                             {codeOutput || (isExecuting ? 'Processing...' : 'System ready for instruction.')}
+                          </pre>
                        </div>
                     </div>
                   )}
                </div>
 
-               <div className="flex items-center justify-between pt-12">
+               {/* Navigation Controls */}
+               <div className="flex items-center justify-between pt-10 border-t border-gray-100">
                   <button 
                     disabled={currentIndex === 0}
                     onClick={() => setCurrentIndex(prev => prev - 1)}
-                    className="flex items-center gap-4 px-10 py-5 rounded-[1.5rem] font-black text-gray-300 hover:text-gray-900 transition-all disabled:opacity-20"
+                    className="flex items-center gap-2 px-8 py-3 text-gray-400 hover:text-[#1a237e] transition-all disabled:opacity-0 font-bold uppercase tracking-widest text-[12px]"
                   >
-                    <ChevronLeft className="w-6 h-6" /> PREVIOUS SEQUENCE
+                    <ChevronLeft size={20} /> Previous Question
                   </button>
                   <button 
                     onClick={() => {
                       if (currentIndex < questions.length - 1) setCurrentIndex(prev => prev + 1);
                       else submitExam();
                     }}
-                    className="flex items-center gap-4 px-12 py-6 bg-gray-900 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all active:scale-95 group"
+                    className="flex items-center gap-2 px-10 py-3 bg-[#1a237e] text-white font-bold uppercase tracking-widest text-[12px] shadow-lg hover:bg-[#0d1440]"
                   >
-                    {currentIndex === questions.length - 1 ? 'COMMIT ALL FRAGMENTS' : 'NEXT FRAGMENT'} 
-                    <ChevronRight className="w-6 h-6 group-hover:translate-x-3 transition-transform" />
+                    {currentIndex === questions.length - 1 ? 'Finish Assessment' : 'Continue to Next Question'} 
+                    <ChevronRight size={20} />
                   </button>
                </div>
             </div>

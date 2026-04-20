@@ -17,9 +17,9 @@ export const ExamProvider = ({ children }) => {
  
   const { token, user } = useAuth();
 
-  const fetchExams = async () => {
+  const fetchExams = async (search = '') => {
     try {
-      const data = await api.get('/exams');
+      const data = await api.get(`/exams${search ? `?search=${encodeURIComponent(search)}` : ''}`);
       const mapped = (data || []).map(e => ({
         ...e,
         status: e.is_published ? 'published' : 'draft',
@@ -64,7 +64,7 @@ export const ExamProvider = ({ children }) => {
 
   const fetchAllData = async () => {
     setLoading(true);
-    const tasks = [fetchExams()];
+    const tasks = [fetchExams(searchTerm)];
     if (user?.role === 'admin') {
       tasks.push(fetchStudents());
       tasks.push(fetchAdminStats());
@@ -74,6 +74,13 @@ export const ExamProvider = ({ children }) => {
     await Promise.all(tasks);
     setLoading(false);
   };
+
+  // Synchronize search with backend
+  useEffect(() => {
+    if (token) {
+      fetchExams(searchTerm);
+    }
+  }, [searchTerm, token]);
 
   useEffect(() => {
     if (token) {
