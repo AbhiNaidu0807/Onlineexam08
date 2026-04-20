@@ -1,27 +1,43 @@
 /**
- * INSTITUTIONAL GRADE SCORING ENGINE (EMERGENCY REPAIR VERSION)
- * 100% Fail-safe logic as requested by systems audit.
+ * INSTITUTIONAL GRADE SCORING ENGINE (STABILITY HARDENED)
+ * 100% Fail-safe logic. No null pointer exceptions permitted.
  */
 
 export function compareAnswers(a, b) {
-  // Task 6: Safe Compare Function
-  const x = String(a ?? "").trim().toLowerCase();
-  const y = String(b ?? "").trim().toLowerCase();
+  try {
+    const x = String(a ?? "").trim().toLowerCase();
+    const y = String(b ?? "").trim().toLowerCase();
 
-  // Task 1: Trace Full Data Flow Logging (Server Side)
-  console.log(`[EVALUATION] Comparing: "${x}" vs "${y}"`);
+    // Check for JSON-encoded answers (e.g. multiple options)
+    let parsedX = x;
+    try { if (x.startsWith('[') || x.startsWith('{')) parsedX = JSON.parse(x); } catch(e) {}
+    
+    let parsedY = y;
+    try { if (y.startsWith('[') || y.startsWith('{')) parsedY = JSON.parse(y); } catch(e) {}
 
-  const bothNum = !isNaN(x) && x !== "" && !isNaN(y) && y !== "";
+    // If both are arrays, check if all elements match
+    if (Array.isArray(parsedX) && Array.isArray(parsedY)) {
+      if (parsedX.length !== parsedY.length) return false;
+      const sortedX = [...parsedX].map(v => String(v).trim().toLowerCase()).sort();
+      const sortedY = [...parsedY].map(v => String(v).trim().toLowerCase()).sort();
+      return sortedX.every((val, index) => val === sortedY[index]);
+    }
 
-  if (bothNum) {
-    const isNumMatch = Number(x) === Number(y);
-    console.log(`  Numeric Match: ${isNumMatch}`);
-    return isNumMatch;
+    // Normal comparison
+    const xStr = Array.isArray(parsedX) ? String(parsedX[0] || "") : String(parsedX);
+    const yStr = Array.isArray(parsedY) ? String(parsedY[0] || "") : String(parsedY);
+
+    const nx = xStr.trim().toLowerCase();
+    const ny = yStr.trim().toLowerCase();
+
+    const bothNum = !isNaN(nx) && nx !== "" && !isNaN(ny) && ny !== "";
+    if (bothNum) return Number(nx) === Number(ny);
+    
+    return nx === ny;
+  } catch (err) {
+    console.error("[SCORING ENGINE] Compare Crash:", err);
+    return false;
   }
-
-  const isTextMatch = x === y;
-  console.log(`  Text Match: ${isTextMatch}`);
-  return isTextMatch;
 }
 
 export const calculateScore = (questions = [], answers = []) => {
@@ -29,44 +45,41 @@ export const calculateScore = (questions = [], answers = []) => {
   let totalMarks = 0;
   const gradedAnswers = [];
 
-  // Build a clean lookup map for student answers
-  const submissionMap = {};
-  answers.forEach(a => {
-    if (a.question_id) {
-      submissionMap[String(a.question_id)] = a.answer;
+  try {
+    const questionsArr = Array.isArray(questions) ? questions : [];
+    const answersArr = Array.isArray(answers) ? answers : [];
+
+    const submissionMap = {};
+    answersArr.forEach(a => {
+      if (a && a.question_id) {
+        submissionMap[String(a.question_id)] = a.answer;
+      }
+    });
+
+    for (const q of questionsArr) {
+      if (!q || !q.id) continue;
+      
+      const qId = String(q.id);
+      const qMarks = Number(q.marks) || 0;
+      totalMarks += qMarks;
+
+      const student = submissionMap[qId] ?? "";
+      const key = q.correct_answer || q.correctAnswer || "";
+
+      const isCorrect = compareAnswers(student, key);
+      const marksAwarded = isCorrect ? qMarks : 0;
+      score += marksAwarded;
+
+      gradedAnswers.push({
+        question_id: q.id,
+        answer: student,
+        correct_answer: key,
+        is_correct: isCorrect ? 1 : 0,
+        marks_awarded: marksAwarded
+      });
     }
-  });
-
-  // Task 5: Rebuild Result Array Correctly
-  for (const q of questions) {
-    const qId = String(q.id);
-    const qMarks = Number(q.marks) || 0;
-    totalMarks += qMarks;
-
-    const student = submissionMap[qId] ?? "";
-    const key = q.correct_answer || q.correctAnswer || "";
-
-    const isCorrect = compareAnswers(student, key);
-
-    // Task 9: Debug Log Each Question (Server Side)
-    console.log({
-      id: qId,
-      student,
-      key,
-      compared: isCorrect,
-      final: isCorrect ? 1 : 0
-    });
-
-    const marksAwarded = isCorrect ? qMarks : 0;
-    score += marksAwarded;
-
-    gradedAnswers.push({
-      question_id: q.id,
-      answer: student,
-      correct_answer: key,
-      is_correct: isCorrect ? 1 : 0, // Store as 1/0 for SQL compatibility
-      marks_awarded: marksAwarded
-    });
+  } catch (err) {
+    console.error("[SCORING ENGINE] Calculate Crash:", err);
   }
 
   return { score, totalMarks, gradedAnswers };

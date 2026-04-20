@@ -1,9 +1,14 @@
-import client from '../config/db.js';
+import { executeWithRetry } from '../config/db.js';
 
+/**
+ * COMPETITIVE METRIC ENGINE
+ * Rebuilds leaderboard rankings for a specific assessment.
+ * Precision-hardened against database connection timeouts.
+ */
 export const updateLeaderboard = async (examId) => {
   try {
-    // Fetch all submitted attempts for this exam
-    const attempts = await client.execute({
+    // Step 1: Query Competitive Dataset
+    const attempts = await executeWithRetry({
       sql: `SELECT user_id, score, total_marks, 
             (strftime('%s', submit_time) - strftime('%s', start_time)) as time_taken,
             submit_time
@@ -13,16 +18,16 @@ export const updateLeaderboard = async (examId) => {
       args: [examId]
     });
 
-    // Delete existing entries for this exam in leaderboard
-    await client.execute({
+    // Step 2: Clear Obsolete Rankings
+    await executeWithRetry({
       sql: 'DELETE FROM leaderboard WHERE exam_id = ?',
       args: [examId]
     });
 
-    // Insert new ranked entries
+    // Step 3: Insert Ranked Matrix
     for (let i = 0; i < attempts.rows.length; i++) {
       const row = attempts.rows[i];
-      await client.execute({
+      await executeWithRetry({
         sql: `INSERT INTO leaderboard (exam_id, user_id, score, total_marks, time_taken, submit_time, rank)
               VALUES (?, ?, ?, ?, ?, ?, ?)`,
         args: [
@@ -37,8 +42,8 @@ export const updateLeaderboard = async (examId) => {
       });
     }
 
-    console.log(`Leaderboard updated for exam ${examId}`);
+    console.log(`[LEADERBOARD] Synchronized rankings for exam ${examId}`);
   } catch (error) {
-    console.error('Error updating leaderboard:', error);
+    console.error('[LEADERBOARD ERROR]: Protocol failure during ranking update:', error.message);
   }
 };

@@ -1,27 +1,13 @@
 import axios from 'axios';
 
-// ULTIMATE NETWORK RESOLUTION ENGINE
-const getApiBase = () => {
-  const envUrl = import.meta.env.VITE_API_URL;
-  
-  // If we have an environment variable and it's not a placeholder, use it
-  if (envUrl && envUrl !== 'http://localhost:5000/api' && envUrl.length > 0) {
-    return envUrl;
-  }
-  
-  // Hardcoded production fallback for the Eagle Exam Master Server
-  return 'https://onlineexam08.onrender.com/api';
-};
-
-const API_BASE_URL = getApiBase();
-
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000, // 30s timeout to allow for Render "cold starts"
+  baseURL: 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-console.log(`[SYSTEM] Intelligence link established at: ${API_BASE_URL}`);
-
+// Request Interceptor: Inject Token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -30,32 +16,38 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Response Interceptor: Ultra-Resilient Synchronization
 api.interceptors.response.use(
   (response) => {
-    if (response.data && response.data.success === true) {
-      return response.data.data;
+    // Mission Task: Ensure we return the most relevant data fragment
+    // My backend uses { success: true, data: { ... } } or { success: true, ... }
+    const payload = response.data;
+    
+    if (payload && payload.success) {
+       // If data is wrapped in 'data' property, return it, else return whole payload
+       return payload.data !== undefined ? payload.data : payload;
     }
-    return response.data;
+    
+    return payload;
   },
   (error) => {
-    // Audit logs for student device debugging
-    console.error('[INSTITUTIONAL ERROR] Target:', error.config?.url);
-    console.error('[INSTITUTIONAL ERROR] Base:', API_BASE_URL);
+    // Institutional Error Handling
+    const data = error.response?.data;
     
-    if (!error.response) {
-      // This is a zero-response error (DNS failure, CORS block, or Server Offline)
-      return Promise.reject({ 
-        message: 'Master server unreachable. Render instances may take 40s to wake up on first access.', 
-        isNetworkError: true 
-      });
-    }
-
-    if (error.response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error.response.data || { message: 'Intelligence Protocol Error' });
+    // Mission Task 5: Handle non-JSON or HTML errors gracefully
+    const errorMessage = data?.message || data?.error || error.message || 'System Protocol Violation';
+    
+    console.error('[API EXCEPTION]:', {
+       target: error.config?.url,
+       message: errorMessage,
+       status: error.response?.status
+    });
+    
+    return Promise.reject({
+       message: errorMessage,
+       status: error.response?.status,
+       data: data
+    });
   }
 );
 
