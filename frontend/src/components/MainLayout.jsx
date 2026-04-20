@@ -25,14 +25,14 @@ import NotificationPanel from './NotificationPanel';
 const SidebarLink = ({ to, icon: Icon, label, active, collapsed }) => (
   <Link 
     to={to} 
-    className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group ${
+    className={`flex items-center gap-4 px-4 py-3 rounded transition-all duration-200 group ${
       active 
-        ? 'bg-orange-500 text-white shadow-md shadow-orange-100 dark:shadow-none' 
-        : 'text-gray-500 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:text-orange-600'
+        ? 'bg-primary text-white' 
+        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary'
     }`}
   >
-    <Icon className={`w-5 h-5 shrink-0 transition-transform ${active ? 'scale-110' : 'group-hover:scale-110'}`} />
-    {!collapsed && <span className="font-semibold text-sm tracking-tight">{label}</span>}
+    <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-primary'}`} />
+    {!collapsed && <span className="font-bold text-sm tracking-tight">{label}</span>}
   </Link>
 );
 
@@ -43,18 +43,21 @@ export const MainLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   
-  // Search State
-  const [query, setQuery] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState({ exams: [], students: [], results: [] });
-  const [searching, setSearching] = useState(false);
-  const searchRef = useRef(null);
-
   // Notification State
   const [notifications, setNotifications] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
   const notifRef = useRef(null);
+
+  // Profile State
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+
+  const getBaseDomain = () => {
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    return apiBase.replace(/\/api$/, '');
+  };
+  const baseUrl = getBaseDomain();
 
   // Sync / Polling
   useEffect(() => {
@@ -84,37 +87,14 @@ export const MainLayout = ({ children }) => {
     } catch (e) {}
   };
 
-  // Search Logic
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      if (query.trim()) {
-        performSearch();
-      } else {
-        setSearchResults({ exams: [], students: [], results: [] });
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
-
-  const performSearch = async () => {
-    setSearching(true);
-    setSearchOpen(true);
-    try {
-      const res = await api.get(`/search?query=${query}`);
-      setSearchResults(res);
-    } catch (e) {}
-    setSearching(false);
-  };
-
   // Click Outside Handler
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setSearchOpen(false);
-      }
       if (notifRef.current && !notifRef.current.contains(event.target)) {
         setNotifOpen(false);
+      }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -124,39 +104,41 @@ export const MainLayout = ({ children }) => {
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const menuItems = isAdmin ? [
-    { to: '/admin', icon: LayoutDashboard, label: 'Overview' },
+    { to: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/admin/students', icon: Users, label: 'Students' },
-    { to: '/admin/exams/create', icon: BookOpen, label: 'Creator' },
+    { to: '/admin/exams/create', icon: BookOpen, label: 'Exams' },
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
   ] : [
     { to: '/student', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/student/exams', icon: Zap, label: 'Active Exams' },
+    { to: '/student/exams', icon: Zap, label: 'Exams' },
     { to: '/student/history', icon: ClipboardCheck, label: 'Results' },
     { to: '/student/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { to: '/student/settings', icon: Settings, label: 'Settings' },
   ];
   
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-500 font-outfit">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-500 font-serif">
       {/* Sidebar - Desktop */}
-      <aside className={`hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 transition-all duration-500 sticky top-0 h-screen ${collapsed ? 'w-24' : 'w-72'}`}>
+      <aside className={`hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-500 sticky top-0 h-screen ${collapsed ? 'w-24' : 'w-72'}`}>
         <div className="p-8 flex items-center justify-between">
           {!collapsed && (
             <Link to="/" className="flex items-center gap-3">
-              <Logo size={60} />
-              <div className="flex flex-col leading-none">
-                <span className="text-xl font-bold font-display text-gray-900 dark:text-white tracking-tight leading-none uppercase italic">EAGLE <span className="text-orange-500 not-italic">EXAM</span></span>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-2">Assessment Center</span>
+              <div className="w-10 h-10 bg-primary flex items-center justify-center rounded">
+                <Logo size={40} />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-xl font-bold text-primary dark:text-white tracking-tight">Eagle Exam</span>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Institutional Portal</span>
               </div>
             </Link>
           )}
-          <button onClick={() => setCollapsed(!collapsed)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+          <button onClick={() => setCollapsed(!collapsed)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors">
             {collapsed ? <Menu className="w-6 h-6 text-gray-400" /> : <X className="w-6 h-6 text-gray-400" />}
           </button>
         </div>
  
         <nav className="flex-grow px-4 space-y-1 py-6">
-          <p className={`text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4 px-4 transition-opacity ${collapsed ? 'opacity-0' : 'opacity-100'}`}>Primary Menu</p>
+          <p className={`text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-4 transition-opacity ${collapsed ? 'opacity-0' : 'opacity-100'}`}>Menu</p>
           {menuItems.map(item => (
             <SidebarLink 
               key={item.to} 
@@ -170,10 +152,10 @@ export const MainLayout = ({ children }) => {
         <div className="p-4 border-t border-gray-100 dark:border-gray-800">
           <button 
             onClick={logout}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all group"
+            className="w-full flex items-center gap-4 px-4 py-3 rounded text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all font-bold text-sm"
           >
-            <LogOut className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            {!collapsed && <span className="font-black text-[10px] uppercase tracking-[0.3em]">Logout Session</span>}
+            <LogOut className="w-5 h-5" />
+            {!collapsed && <span className="uppercase tracking-widest text-[11px]">Logout</span>}
           </button>
         </div>
       </aside>
@@ -181,121 +163,64 @@ export const MainLayout = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top Header */}
-        <header className="h-24 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 sticky top-0 z-40 px-6 md:px-12 flex items-center justify-between shrink-0">
-          <button className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl" onClick={() => setMobileOpen(true)}>
+        <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40 px-6 md:px-10 flex items-center justify-between shrink-0">
+          <button className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded" onClick={() => setMobileOpen(true)}>
             <Menu className="w-6 h-6" />
           </button>
- 
-          {/* Search Container */}
-          <div className="hidden md:flex flex-col relative" ref={searchRef}>
-            <div className={`flex items-center gap-4 bg-gray-50 dark:bg-gray-800 px-6 py-3 rounded-[1.5rem] w-[500px] border transition-all ${searchOpen ? 'border-orange-500 shadow-xl bg-white' : 'border-gray-100 dark:border-gray-700 shadow-inner'} group`}>
-              {searching ? <Loader2 className="w-5 h-5 text-orange-500 animate-spin" /> : <Search className="w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />}
-              <input 
-                type="text" 
-                placeholder="Global Intelligence Search..." 
-                className="bg-transparent border-none outline-none text-sm font-bold w-full italic"
-                value={query}
-                onChange={(e) => {setQuery(e.target.value); setSearchOpen(true);}}
-                onFocus={() => setSearchOpen(true)}
-              />
-              {query && <button onClick={() => setQuery('')} className="p-1 hover:bg-gray-200 rounded-full"><X className="w-4 h-4 text-gray-400" /></button>}
-            </div>
-
-            {/* Search Suggestions Dropdown */}
-            {searchOpen && query.trim() && (
-              <div className="absolute top-full left-0 right-0 mt-4 bg-white border border-gray-100 rounded-[2rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.15)] p-4 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                   {/* Exams Section */}
-                   {searchResults.exams?.length > 0 && (
-                     <div className="mb-6">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 mb-3 italic">Active Assessments</p>
-                        {searchResults.exams.map(e => (
-                          <button key={e.id} onClick={() => {navigate(`/student/exams`); setSearchOpen(false);}} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group">
-                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500"><Zap className="w-5 h-5" /></div>
-                                <span className="font-bold text-sm text-gray-800">{e.title}</span>
-                             </div>
-                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:translate-x-1 transition-transform" />
-                          </button>
-                        ))}
-                     </div>
-                   )}
-                   {/* Students Section */}
-                   {isAdmin && searchResults.students?.length > 0 && (
-                     <div className="mb-6">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 mb-3 italic">Identity Fragments</p>
-                        {searchResults.students.map(s => (
-                          <button key={s.id} onClick={() => {navigate(`/admin/students`); setSearchOpen(false);}} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group">
-                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500"><Users className="w-5 h-5" /></div>
-                                <div className="text-left leading-tight">
-                                   <p className="font-bold text-sm text-gray-800">{s.name}</p>
-                                   <p className="text-[9px] text-gray-400 font-bold uppercase">{s.email}</p>
-                                </div>
-                             </div>
-                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:translate-x-1 transition-transform" />
-                          </button>
-                        ))}
-                     </div>
-                   )}
-                   {/* Results Section */}
-                   {searchResults.results?.length > 0 && (
-                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 mb-3 italic">Verification Logs</p>
-                        {searchResults.results.map(r => (
-                          <button key={r.id} onClick={() => {navigate(isAdmin ? `/admin/exams` : `/student/history`); setSearchOpen(false);}} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group">
-                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500"><ClipboardCheck className="w-5 h-5" /></div>
-                                <div className="text-left leading-tight">
-                                   <p className="font-bold text-sm text-gray-800">{r.exam_title}</p>
-                                   <p className="text-[9px] text-emerald-600 font-bold uppercase">{r.score}/{r.total_marks} Marks Verified</p>
-                                </div>
-                             </div>
-                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:translate-x-1 transition-transform" />
-                          </button>
-                        ))}
-                     </div>
-                   )}
-                   {(!searchResults.exams?.length && !searchResults.students?.length && !searchResults.results?.length) && (
-                     <div className="py-10 text-center text-gray-400 font-bold italic">No intelligence matched terminal query.</div>
-                   )}
-                </div>
-              </div>
-            )}
+  
+          <div className="flex items-center gap-4">
+             <h2 className="text-xl font-bold text-gray-800 dark:text-white hidden md:block">
+               {isAdmin ? 'Admin Dashboard' : 'Student Portal'}
+             </h2>
           </div>
 
           <div className="flex items-center gap-6">
-             {/* Notification Bell */}
-             <div className="relative" ref={notifRef}>
-                <button 
-                  onClick={() => setNotifOpen(!notifOpen)}
-                  className={`p-3 rounded-[1.2rem] relative transition-all group ${unreadCount > 0 ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'bg-gray-50 dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-orange-500/10'}`}
-                >
-                  <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'animate-bounce' : 'text-gray-500'}`} />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-orange-600 text-[9px] font-black flex items-center justify-center rounded-full ring-4 ring-gray-50">
-                       {unreadCount}
-                    </span>
-                  )}
-                </button>
-                {notifOpen && (
-                  <NotificationPanel 
-                    notifications={notifications} 
-                    onClose={() => setNotifOpen(false)}
-                    onMarkRead={handleMarkRead}
-                    onClearAll={handleClearAll}
-                    loading={notifLoading}
-                  />
-                )}
-             </div>
-             
-             <div className="flex items-center gap-3 pl-6 border-l border-gray-100 dark:border-gray-800">
+             <div className="flex items-center gap-4 pl-6 relative z-[60]">
                 <div className="text-right hidden sm:block leading-none">
-                   <p className="text-sm font-bold dark:text-white mb-1 uppercase italic tracking-tighter">{user?.name}</p>
-                   <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest opacity-60">Authorized {user?.role}</p>
+                   <p className="text-sm font-bold dark:text-white mb-1 uppercase italic tracking-tighter truncate max-w-[120px]">{user?.name}</p>
+                   <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest opacity-60 leading-none">Authorized {user?.role}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-tr from-gray-900 to-black rounded-[1.2rem] flex items-center justify-center text-white font-black text-base shadow-xl group border-2 border-white/10">
-                   {user?.name?.charAt(0).toUpperCase()}
+                
+                <div className="relative" ref={profileDropdownRef}>
+                  <button 
+                    onClick={() => setProfileOpen(!profileOpen)}
+                    className="w-12 h-12 rounded-[1.2rem] overflow-hidden border-2 border-white/10 shadow-xl group hover:border-orange-500 transition-all flex items-center justify-center bg-gradient-to-tr from-gray-900 to-black"
+                  >
+                    {user?.profile_photo ? (
+                      <img 
+                        src={user.profile_photo.startsWith('http') ? user.profile_photo : `${baseUrl}${user.profile_photo}`} 
+                        alt={user?.name} 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      <span className="text-white font-black text-base">{user?.name?.charAt(0).toUpperCase()}</span>
+                    )}
+                  </button>
+
+                  {profileOpen && (
+                    <div className="absolute right-0 mt-4 w-56 bg-white dark:bg-gray-900 rounded-3xl shadow-[0_32px_128px_-16px_rgba(0,0,0,0.15)] border border-gray-100 dark:border-gray-800 py-3 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                      <div className="px-6 py-4 border-b border-gray-50 dark:border-gray-800 mb-2">
+                        <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1 italic">Identity Portal</p>
+                        <p className="text-xs font-bold text-gray-800 dark:text-white truncate">{user?.email}</p>
+                      </div>
+                      
+                      <button 
+                        onClick={() => { navigate(isAdmin ? '/admin/profile' : '/student/profile'); setProfileOpen(false); }}
+                        className="w-full flex items-center gap-4 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:text-orange-600 transition-all"
+                      >
+                         <Trophy className="w-5 h-5" /> My Profile
+                      </button>
+
+                      <div className="h-px bg-gray-50 dark:bg-gray-800 my-2 mx-6" />
+
+                      <button 
+                        onClick={logout}
+                        className="w-full flex items-center gap-4 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all"
+                      >
+                         <LogOut className="w-5 h-5" /> Logout
+                      </button>
+                    </div>
+                  )}
                 </div>
              </div>
           </div>

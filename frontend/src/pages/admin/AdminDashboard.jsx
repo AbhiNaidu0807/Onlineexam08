@@ -12,24 +12,23 @@ import {
   BarChart2, 
   CheckCircle,
   Clock,
-  ShieldAlert,
-  Zap,
-  Activity,
-  ArrowRight,
-  ChevronRight
+  ShieldCheck,
+  ChevronRight,
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 
-const StatCard = ({ title, count, icon: Icon, colorClass, delay }) => (
-  <div className={`relative group p-8 rounded-[3rem] bg-white border border-gray-100 shadow-xl overflow-hidden transition-all hover:scale-[1.02] active:scale-95 animate-fade-in`} style={{ animationDelay: `${delay}ms` }}>
-    <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-5 transition-transform group-hover:scale-150 ${colorClass}`}></div>
-    <div className="flex flex-col gap-6 relative z-10">
-      <div className={`w-14 h-14 rounded-2xl ${colorClass} flex items-center justify-center text-white shadow-lg`}>
-        <Icon className="w-8 h-8" />
+const StatCard = ({ title, count, icon: Icon, delay }) => (
+  <div className="bg-white p-6 border border-slate-200 shadow-sm flex flex-col gap-4 animate-fade-in" style={{ animationDelay: `${delay}ms` }}>
+    <div className="flex items-center justify-between">
+      <div className="w-10 h-10 bg-slate-50 flex items-center justify-center text-primary rounded">
+        <Icon className="w-5 h-5" />
       </div>
-      <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">{title}</p>
-        <p className="text-4xl font-black font-display text-gray-900 italic tracking-tighter">{count}</p>
-      </div>
+      <TrendingUp className="w-4 h-4 text-slate-300" />
+    </div>
+    <div>
+      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">{title}</p>
+      <p className="text-3xl font-bold text-slate-900">{count}</p>
     </div>
   </div>
 );
@@ -57,158 +56,142 @@ const AdminDashboard = () => {
     const end = new Date(exam.end_time);
 
     if (exam.status === 'draft' || !exam.is_published) {
-      return <span className="bg-gray-100 text-gray-400 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Draft Archive</span>;
+      return <span className="bg-slate-100 text-slate-500 px-2 py-0.5 border border-slate-200 text-[10px] font-bold uppercase tracking-wider">Draft</span>;
     }
     if (now > end) {
-      return <span className="bg-rose-500 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-rose-100">Terminated</span>;
+      return <span className="bg-rose-50 text-rose-600 px-2 py-0.5 border border-rose-100 text-[10px] font-bold uppercase tracking-wider">Closed</span>;
     }
     if (now >= start && now <= end) {
-      return <span className="bg-emerald-500 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100">Active Field</span>;
+      return <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider">Active</span>;
     }
-    return <span className="bg-blue-500 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-100">Scheduled</span>;
+    return <span className="bg-blue-50 text-blue-600 px-2 py-0.5 border border-blue-100 text-[10px] font-bold uppercase tracking-wider">Scheduled</span>;
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Delete this assessment sequence? All associated data will be purged.')) {
+    if (window.confirm('Are you sure you want to delete this exam? All associated data will be removed.')) {
       deleteExam(id);
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-16 animate-fade-in px-4 mb-20">
-      {/* Institutional Controller Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-             <span className="bg-gray-900 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.3em] shadow-xl">Controller Terminal</span>
-             <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_#f43f5e]"></span>
-          </div>
-          <h1 className="text-6xl font-black font-display text-gray-900 tracking-tighter uppercase leading-none italic">
-             Resource <span className="text-orange-500 not-italic">Manager</span>
-          </h1>
-          <p className="text-gray-400 font-bold uppercase tracking-[0.3em] text-[10px] italic">Institutional Control Cluster 07 • Live Environment Synchronization Active</p>
+    <div className="max-w-7xl mx-auto space-y-10 animate-fade-in font-serif">
+      {/* Institutional Header */}
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200 pb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Admin Dashboard</h1>
+          <p className="text-slate-500 text-sm italic font-normal">Welcome to the Eagle Exam institutional management system. Monitor and coordinate all academic assessments from this portal.</p>
         </div>
         
         <Link 
           to="/admin/exams/create" 
-          className="group relative overflow-hidden bg-black text-white px-10 py-5 rounded-[2rem] font-black text-[10px] tracking-[0.4em] uppercase shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-4 group"
+          className="btn-primary"
         >
-          <div className="absolute inset-0 bg-orange-600 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-          <span className="relative z-10 flex items-center gap-4">
-             INITIALIZE ARCHIVE <Plus className="w-5 h-5" />
-          </span>
+          <Plus className="w-4 h-4" /> Create New Exam
         </Link>
       </header>
 
-      {/* Institutional Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        <StatCard title="Total Assets" count={stats.totalExams} icon={FileText} colorClass="bg-orange-500" delay={100} />
-        <StatCard title="Global Identity" count={stats.totalStudents} icon={Users} colorClass="bg-blue-500" delay={200} />
-        <StatCard title="Verifications" count={stats.totalSubmissions} icon={ClipboardCheck} colorClass="bg-emerald-500" delay={300} />
-        <StatCard title="Upcoming Sync" count={stats.upcomingExams} icon={Calendar} colorClass="bg-purple-500" delay={400} />
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Total Exams" count={stats.totalExams} icon={FileText} delay={100} />
+        <StatCard title="Total Students" count={stats.totalStudents} icon={Users} delay={200} />
+        <StatCard title="Submissions" count={stats.totalSubmissions} icon={ClipboardCheck} delay={300} />
+        <StatCard title="Upcoming Exams" count={stats.upcomingExams} icon={Calendar} delay={400} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-12">
-        {/* Assessment Management Panel */}
-        <div className="xl:col-span-8 space-y-10">
-          <div className="bg-white rounded-[3.5rem] border-2 border-gray-50 overflow-hidden shadow-2xl transition-all hover:border-orange-100">
-            <div className="px-10 py-8 border-b-4 border-gray-50 flex justify-between items-center bg-gray-50/30">
-              <h2 className="text-2xl font-black font-display text-gray-900 uppercase italic tracking-tight flex items-center gap-4">
-                <ShieldAlert className="w-6 h-6 text-orange-500" /> Assessment <span className="text-orange-500 not-italic">Ledger</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Exam Management Table */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-primary" /> Exam Management Ledger
               </h2>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500"></div> REAL-TIME SYNC
-              </div>
             </div>
             
-            <div className="overflow-x-auto custom-scrollbar">
+            <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-gray-50/50">
-                    <th className="px-10 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sequence Identity</th>
-                    <th className="px-10 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Protocol Status</th>
-                    <th className="px-10 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Operation Controls</th>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Exam Title</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-slate-200">
                   {exams.map((exam) => (
-                    <tr key={exam.id} className="hover:bg-gray-50/30 transition-colors group">
-                      <td className="px-10 py-8">
-                        <p className="text-lg font-black text-gray-900 italic tracking-tighter mb-2 group-hover:text-orange-500 transition-colors">{exam.title.toUpperCase()}</p>
-                        <div className="flex items-center gap-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                          <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-orange-500" /> {exam.duration}m</span>
-                          <span className="w-1.5 h-1.5 bg-gray-200 rounded-full"></span>
-                          <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> {exam.passing_score}% MIN</span>
+                    <tr key={exam.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-5">
+                        <p className="text-base font-bold text-slate-900 mb-1">{exam.title}</p>
+                        <div className="flex items-center gap-4 text-[11px] text-slate-400 font-normal">
+                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {exam.duration} Minutes</span>
+                          <span className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5" /> Passing: {exam.passing_score}%</span>
                         </div>
                       </td>
-                      <td className="px-10 py-8 text-center">
+                      <td className="px-6 py-5 text-center">
                         {getStatusBadge(exam)}
                       </td>
-                      <td className="px-10 py-8">
-                        <div className="flex justify-end gap-3 items-center">
+                      <td className="px-6 py-5">
+                        <div className="flex justify-end gap-2 items-center">
                           {(!exam.is_published && exam.status === 'draft') && (
                             <button 
                               onClick={() => publishExam(exam.id)}
                               disabled={!exam.question_count || exam.question_count === 0}
-                              className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                              className={`px-3 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider transition-all ${
                                 (!exam.question_count || exam.question_count === 0) 
-                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
-                                : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-xl shadow-emerald-100 active:scale-95'
+                                ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
+                                : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95'
                               }`}
                             >
-                              Deploy
+                              Publish
                             </button>
                           )}
-                          <Link to={`/admin/exams/questions/${exam.id}`} className="p-3 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-all" title="Fragments"><HelpCircle className="w-5 h-5" /></Link>
-                          <Link to={`/admin/exams/results/${exam.id}`} className="p-3 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all" title="Logs"><BarChart2 className="w-5 h-5" /></Link>
-                          <button onClick={() => handleDelete(exam.id)} className="p-3 text-gray-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"><Trash2 className="w-5 h-5" /></button>
+                          <Link to={`/admin/exams/questions/${exam.id}`} className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 rounded transition-all" title="Manage Questions"><HelpCircle className="w-5 h-5" /></Link>
+                          <Link to={`/admin/exams/results/${exam.id}`} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all" title="View Results"><BarChart2 className="w-5 h-5" /></Link>
+                          <button onClick={() => handleDelete(exam.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all"><Trash2 className="w-5 h-5" /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
+                  {exams.length === 0 && (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-20 text-center text-slate-400 italic">No exams found in the institutional records.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
-        {/* Global Control Sidebar */}
-        <div className="xl:col-span-4 space-y-10">
-           <div className="bg-white rounded-[3.5rem] p-10 border-2 border-gray-50 shadow-2xl space-y-10">
-              <div className="flex items-center gap-4 mb-2">
-                 <div className="w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-gray-100"><Activity className="w-6 h-6" /></div>
-                 <h3 className="text-xl font-black text-gray-900 uppercase italic leading-none">Integrity</h3>
-              </div>
-              <div className="space-y-8">
-                 <div className="flex items-center gap-6 group">
-                    <div className="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110">
-                       <ShieldAlert className="w-7 h-7" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Database Shards</p>
-                        <p className="text-sm font-black text-gray-900 leading-none">CONNECTED & SYNCED</p>
-                    </div>
+        {/* System Status Sidebar */}
+        <div className="space-y-6">
+           <div className="bg-white border border-slate-200 p-6 shadow-sm space-y-6">
+              <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-primary" /> System Status
+              </h3>
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500 font-normal italic">Database Connectivity</span>
+                    <span className="text-emerald-600 font-bold uppercase text-[10px] tracking-widest">Stable</span>
                  </div>
-                 <div className="flex items-center gap-6 group">
-                    <div className="w-14 h-14 bg-orange-500/10 text-orange-500 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110">
-                       <Zap className="w-7 h-7" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Response Logic</p>
-                        <p className="text-sm font-black text-gray-900 leading-none">ZERO-LATENCY STREAM</p>
-                    </div>
+                 <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500 font-normal italic">Proctoring Engine</span>
+                    <span className="text-emerald-600 font-bold uppercase text-[10px] tracking-widest">Active</span>
+                 </div>
+                 <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500 font-normal italic">Resource Allocation</span>
+                    <span className="text-blue-600 font-bold uppercase text-[10px] tracking-widest">Optimized</span>
                  </div>
               </div>
-              <Link to="/admin/students" className="w-full py-5 bg-gray-50 hover:bg-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 transition-all">
-                 VERIFY CLUSTER <ChevronRight className="w-5 h-5" />
+              <Link to="/admin/students" className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
+                 Manage Enrollment <ChevronRight className="w-4 h-4" />
               </Link>
            </div>
 
-           <div className="bg-gradient-to-br from-gray-900 to-black rounded-[3.5rem] p-10 text-white space-y-6 shadow-2xl group overflow-hidden relative">
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-              <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] relative z-10">Institutional Notice</p>
-              <h4 className="text-2xl font-black font-display italic tracking-tight relative z-10 leading-tight">Proctoring reports for the latest 0x7 session are now ready for audit.</h4>
-              <button className="text-[10px] font-black text-white px-8 py-3 bg-white/10 rounded-xl hover:bg-orange-500 transition-all relative z-10 tracking-[0.3em] uppercase underline decoration-2 underline-offset-8">Start Audit Analysis</button>
+           <div className="bg-primary p-6 text-white space-y-4 shadow-sm border-l-4 border-accent">
+              <p className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">Institutional Memorandum</p>
+              <h4 className="text-lg font-bold italic leading-tight">New proctoring standards have been implemented for all upcoming sessions. Please review the updated protocols in settings.</h4>
+              <button className="text-[11px] font-bold text-white py-2 px-4 bg-white/10 hover:bg-white/20 rounded uppercase tracking-widest border border-white/20">Review Protocols</button>
            </div>
         </div>
       </div>

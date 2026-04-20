@@ -136,7 +136,7 @@ export const submitAttempt = async (req, res) => {
                    ON CONFLICT(attempt_id, question_id) DO UPDATE SET 
                    answer = excluded.answer, 
                    saved_at = CURRENT_TIMESTAMP`,
-             args: [attemptId, Number(qId), finalAns]
+             args: [parseInt(attemptId), parseInt(qId), finalAns]
           });
        }
     }
@@ -145,13 +145,30 @@ export const submitAttempt = async (req, res) => {
       sql: 'SELECT * FROM questions WHERE exam_id = ?',
       args: [attempt.exam_id]
     });
-    
-    const answersRes = await client.execute({
-      sql: 'SELECT * FROM answers WHERE attempt_id = ?',
-      args: [attemptId]
+
+    // TASK 6: Single Source of Truth - Evaluate using the incoming answers directly
+    // This avoids race conditions where DB might not have finished indexing the newly inserted rows
+    const normalizedAnswersForScore = questionsRes.rows.map(q => {
+      const bodyAns = bodyAnswers[String(q.id)];
+      return {
+        question_id: q.id,
+        answer: typeof bodyAns === 'object' ? JSON.stringify(bodyAns) : String(bodyAns ?? "")
+      };
     });
 
-    const { score, totalMarks, gradedAnswers } = calculateScore(questionsRes.rows, answersRes.rows);
+    const { score, totalMarks, gradedAnswers } = calculateScore(questionsRes.rows, normalizedAnswersForScore);
+
+    // TASK 1: TRACE FULL DATA FLOW LOGGING
+    console.group(`[SUBMISSION AUDIT] Attempt ${attemptId}`);
+    gradedAnswers.forEach((ga, i) => {
+      const q = questionsRes.rows.find(row => row.id === ga.question_id);
+      console.log(`Q${i+1} (ID: ${ga.question_id})`);
+      console.log(`  Student: "${ga.answer}" (type: ${typeof ga.answer})`);
+      console.log(`  Correct: "${ga.correct_answer}" (type: ${typeof ga.correct_answer})`);
+      console.log(`  Result: ${ga.is_correct ? 'CORRECT ✅' : 'INCORRECT ❌'}`);
+    });
+    console.log(`Total Score: ${score}/${totalMarks}`);
+    console.groupEnd();
 
     for (const ga of gradedAnswers) {
       await client.execute({
@@ -216,17 +233,51 @@ export const getAttemptResult = async (req, res) => {
     const examRes = await client.execute({ sql: 'SELECT * FROM exams WHERE id = ?', args: [attempt.exam_id] });
     const exam = examRes.rows[0];
 
+    const questionsRes = await client.execute({
+      sql: 'SELECT * FROM questions WHERE exam_id = ?',
+      args: [attempt.exam_id]
+    });
+
     const answersRes = await client.execute({
-      sql: `SELECT a.*, q.question_text, q.correct_answer, q.explanation 
+      sql: `SELECT a.*, q.question_text, q.correct_answer, q.explanation, q.marks, q.type 
             FROM answers a JOIN questions q ON a.question_id = q.id 
             WHERE a.attempt_id = ?`,
       args: [id]
     });
 
+    // SILENT RE-GRADING: Always use the latest scoring engine logic
+    const { score, gradedAnswers } = calculateScore(questionsRes.rows, answersRes.rows);
+    
+    // Update attempt if score differs (due to logic updates)
+    if (score !== attempt.score) {
+      await client.execute({
+        sql: 'UPDATE attempts SET score = ? WHERE id = ?',
+        args: [score, id]
+      });
+      attempt.score = score;
+    }
+
+    // Sync answers table with re-graded results
+    for (const ga of gradedAnswers) {
+      await client.execute({
+        sql: 'UPDATE answers SET is_correct = ?, marks_awarded = ? WHERE attempt_id = ? AND question_id = ?',
+        args: [ga.is_correct, ga.marks_awarded, id, ga.question_id]
+      });
+    }
+
     return successResponse(res, {
-      attempt: { ...attempt, id: attempt.id.toString() },
+      attempt: { ...attempt, score, total_marks: totalMarks, id: attempt.id.toString() },
       exam: { ...exam, id: exam.id.toString() },
-      answers: answersRes.rows.map(a => ({ ...a, id: a.id.toString() }))
+      answers: gradedAnswers.map(ga => {
+        // Find matching row for metadata (question text, etc.)
+        const a = answersRes.rows.find(row => String(row.question_id) === String(ga.question_id));
+        return {
+           ...a,
+           ...ga,
+           id: a ? a.id.toString() : `virtual-${ga.question_id}`,
+           is_correct: ga.is_correct // TRUST THE SCORING ENGINE
+        };
+      })
     });
   } catch (error) {
     return errorResponse(res, error, 'Server Error');

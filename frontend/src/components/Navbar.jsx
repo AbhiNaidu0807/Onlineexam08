@@ -1,16 +1,36 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
 import { useTheme } from '../context/ThemeContext';
-import { LogOut, User, LayoutDashboard, ClipboardList, Sun, Moon } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, ClipboardList, Sun, Moon, ChevronDown, UserCircle, Settings } from 'lucide-react';
 import Logo from './Logo';
 
 const Navbar = () => {
   const { user, logout, isAdmin, isStudent } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   if (!user) return null;
+
+  const getBaseDomain = () => {
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    return apiBase.replace(/\/api$/, '');
+  };
+  
+  const baseUrl = getBaseDomain();
+  const profilePhotoUrl = user.profile_photo ? (user.profile_photo.startsWith('http') ? user.profile_photo : `${baseUrl}${user.profile_photo}`) : null;
 
   return (
     <nav className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50 transition-colors duration-300">
@@ -47,23 +67,52 @@ const Navbar = () => {
             {isDarkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5" />}
           </button>
 
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-2xl border border-gray-100 dark:border-gray-600 shadow-sm">
-            <div className="w-7 h-7 bg-gradient-to-tr from-orange-400 to-orange-600 rounded-lg flex items-center justify-center text-[11px] text-white font-black uppercase">
-              {user.name.charAt(0)}
-            </div>
-            <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{user.name}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg uppercase font-black tracking-tighter ${isAdmin ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600' : 'bg-green-100 dark:bg-green-900/30 text-green-600'}`}>
-              {user.role}
-            </span>
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-700 rounded-2xl border border-gray-100 dark:border-gray-600 shadow-sm hover:border-orange-200 dark:hover:border-orange-900 transition-all"
+            >
+              {profilePhotoUrl ? (
+                <img src={profilePhotoUrl} alt="Profile" className="w-8 h-8 rounded-lg object-cover border border-gray-200 dark:border-gray-500" />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-tr from-orange-400 to-orange-600 rounded-lg flex items-center justify-center text-[12px] text-white font-black uppercase">
+                  {user.name.charAt(0)}
+                </div>
+              )}
+              <div className="hidden sm:block text-left mr-1">
+                <p className="text-xs font-black text-gray-800 dark:text-gray-200 leading-none mb-0.5">{user.name}</p>
+                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">{user.role}</p>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700 mb-2">
+                   <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Identity Core</p>
+                   <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.email}</p>
+                </div>
+
+                <button 
+                  onClick={() => { navigate(isStudent ? '/student/profile' : '/admin/profile'); setIsDropdownOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-gray-700 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                >
+                  <UserCircle className="w-5 h-5" />
+                  My Profile
+                </button>
+
+                <div className="h-px bg-gray-50 dark:bg-gray-700 my-2" />
+
+                <button 
+                  onClick={() => { logout(); setIsDropdownOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
-          
-          <button 
-            onClick={logout}
-            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-            title="Logout"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
         </div>
       </div>
     </nav>

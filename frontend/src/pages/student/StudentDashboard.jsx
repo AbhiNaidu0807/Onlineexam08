@@ -5,33 +5,29 @@ import { useExams } from '../../hooks/useExams';
 import { 
   BookOpen, 
   ClipboardCheck, 
-  Target, 
   Award, 
-  Calendar, 
   Trophy, 
-  ExternalLink,
   ChevronRight,
-  Zap,
   Clock,
-  Layout,
-  Fingerprint,
   Activity,
-  ArrowRight
+  ArrowRight,
+  TrendingUp,
+  FileText
 } from 'lucide-react';
 
-const StatCard = ({ title, value, subtext, icon: Icon, colorClass, gradientClass, delay }) => (
-  <div className={`relative group p-8 rounded-[3rem] bg-white border border-gray-100 shadow-xl overflow-hidden transition-all hover:scale-[1.02] active:scale-95 animate-fade-in`} style={{ animationDelay: `${delay}ms` }}>
-    <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-5 transition-transform group-hover:scale-150 ${colorClass}`}></div>
-    <div className="flex flex-col gap-6 relative z-10">
-      <div className={`w-14 h-14 rounded-2xl ${gradientClass} flex items-center justify-center text-white shadow-lg`}>
-        <Icon className="w-8 h-8" />
+const StatCard = ({ title, value, subtext, icon: Icon, delay }) => (
+  <div className="bg-white p-6 border border-slate-200 shadow-sm flex flex-col gap-4 animate-fade-in" style={{ animationDelay: `${delay}ms` }}>
+    <div className="flex items-center justify-between">
+      <div className="w-10 h-10 bg-slate-50 flex items-center justify-center text-blue-900 rounded">
+        <Icon className="w-5 h-5" />
       </div>
-      <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">{title}</p>
-        <div className="flex items-baseline gap-3">
-          <p className="text-4xl font-black font-display text-gray-900 italic tracking-tighter">{value}</p>
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{subtext}</p>
-        </div>
+      <TrendingUp className="w-4 h-4 text-slate-300" />
+    </div>
+    <div>
+      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">{title}</p>
+      <div className="flex items-baseline gap-2">
+        <p className="text-3xl font-bold text-slate-900">{value}</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{subtext}</p>
       </div>
     </div>
   </div>
@@ -48,58 +44,45 @@ const StudentDashboard = () => {
   const stats = useMemo(() => getStudentStats(user?.id), [user?.id, submissions]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-16 animate-fade-in mb-20 px-4">
-      {/* Dynamic Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-             <span className="bg-orange-500 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.25em] shadow-lg shadow-orange-100">Official Access</span>
-             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          </div>
-          <h1 className="text-6xl font-black font-display text-gray-900 tracking-tighter uppercase leading-none italic">
-             Welcome, <span className="text-orange-500 not-italic">{user?.name}</span>
-          </h1>
-          <p className="text-gray-400 font-bold uppercase tracking-[0.3em] text-[10px] italic">Operational Readiness Verified • Student Terminal 01</p>
+    <div className="max-w-7xl mx-auto space-y-10 animate-fade-in font-serif">
+      {/* Institutional Header */}
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200 pb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Student Dashboard</h1>
+          <p className="text-slate-500 text-sm italic font-normal">Welcome back, {user?.name}. Your institutional credentials have been verified. Access your active assessments and results below.</p>
         </div>
         
-        <div className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 group border-2 border-gray-50 shadow-2xl shadow-orange-100 transition-all hover:border-orange-200">
+        <div className="bg-white border border-slate-200 px-6 py-3 flex items-center gap-4 shadow-sm">
            <div className="text-right">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">Status Protocol</p>
-              <p className="text-xl font-black font-display text-gray-900 italic tracking-tight">ELITE SCHOLAR</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Academic Standing</p>
+              <p className="text-base font-bold text-blue-900">ENROLLED STUDENT</p>
            </div>
-           <div className="w-16 h-16 bg-gray-900 rounded-[1.5rem] flex items-center justify-center shadow-2xl transition-transform group-hover:rotate-[15deg]">
-              <Fingerprint className="text-orange-500 w-8 h-8" />
-           </div>
+           <div className="w-px h-8 bg-slate-100"></div>
+           <Activity className="text-blue-900 w-5 h-5" />
         </div>
       </header>
 
-      {/* Primary Analytics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* Primary Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Active Exams" 
           value={activeExams.length} 
-          subtext="Deployments" 
+          subtext="Available" 
           icon={BookOpen} 
-          colorClass="bg-blue-500" 
-          gradientClass="bg-gradient-to-tr from-blue-500 to-indigo-600"
           delay={100}
         />
         <StatCard 
           title="Completed" 
           value={stats.completed} 
-          subtext="Verifications" 
+          subtext="Verified" 
           icon={ClipboardCheck} 
-          colorClass="bg-emerald-500" 
-          gradientClass="bg-gradient-to-tr from-emerald-500 to-teal-600"
           delay={200}
         />
         <StatCard 
           title="Global Rank" 
           value={`#${stats.rank}`} 
-          subtext="Placement" 
+          subtext="Standing" 
           icon={Trophy} 
-          colorClass="bg-orange-500" 
-          gradientClass="bg-black"
           delay={300}
         />
         <StatCard 
@@ -107,94 +90,83 @@ const StudentDashboard = () => {
           value={`${stats.avgScore}%`} 
           subtext="Aggregate" 
           icon={Award} 
-          colorClass="bg-orange-500" 
-          gradientClass="bg-gradient-to-tr from-orange-400 to-orange-600"
           delay={400}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Recent Activity Ledger */}
-        <div className="lg:col-span-8 space-y-10">
-           <div className="flex justify-between items-center border-b-4 border-gray-50 pb-6">
-             <h3 className="text-3xl font-black font-display text-gray-900 uppercase tracking-tighter flex items-center gap-4 italic">
-               Recent <span className="text-orange-500 not-italic">Verifications</span>
-             </h3>
-             <Link to="/student/history" className="text-[10px] font-black text-gray-400 hover:text-orange-500 uppercase tracking-widest flex items-center gap-2 transition-colors">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Recent Results Table */}
+        <div className="lg:col-span-2 space-y-6">
+           <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+             <h2 className="text-xl font-bold text-slate-800">Recent Results Ledger</h2>
+             <Link to="/student/history" className="text-[11px] font-bold text-slate-400 hover:text-blue-900 uppercase tracking-widest flex items-center gap-1 transition-colors">
                Full History <ChevronRight className="w-4 h-4" />
              </Link>
            </div>
            
-           <div className="space-y-6">
+           <div className="space-y-4">
               {submissions.length > 0 ? (
-                submissions.slice(0, 5).map((sub, idx) => (
-                  <div key={sub.id} className="bg-white p-8 rounded-[3rem] border-2 border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-8 transition-all hover:border-orange-100 hover:shadow-2xl group">
-                    <div className="flex items-center gap-8 text-center sm:text-left">
-                      <div className={`w-20 h-20 rounded-[1.8rem] flex items-center justify-center font-black font-display text-2xl shadow-xl transition-transform group-hover:scale-110 ${sub.score >= 60 ? 'bg-emerald-500 text-white' : 'bg-orange-500 text-white'}`}>
+                submissions.slice(0, 5).map((sub) => (
+                  <div key={sub.id} className="bg-white p-5 border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-6 hover:border-blue-900 transition-all shadow-sm">
+                    <div className="flex items-center gap-6">
+                      <div className={`w-14 h-14 flex items-center justify-center font-bold text-xl border ${sub.score >= 60 ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-rose-100 bg-rose-50 text-rose-700'}`}>
                         {sub.score}%
                       </div>
                       <div>
-                        <p className="font-black text-gray-900 text-2xl tracking-tighter leading-tight mb-2 italic uppercase">{sub.title || 'General Logic Fragment'}</p>
-                        <div className="flex flex-wrap justify-center sm:justify-start items-center gap-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                           <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-orange-500" /> {sub.submit_time ? new Date(sub.submit_time).toLocaleDateString() : 'REAL-TIME'}</span>
-                           <span className="w-1.5 h-1.5 bg-gray-200 rounded-full"></span>
-                           <span className={sub.score >= 60 ? 'text-emerald-500' : 'text-orange-500'}>{sub.score >= 60 ? 'CERTIFIED' : 'RETAKE REQUIRED'}</span>
+                        <p className="font-bold text-slate-900 text-lg mb-1">{sub.title || 'General Assessment'}</p>
+                        <div className="flex items-center gap-3 text-[11px] text-slate-400 font-normal">
+                           <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {sub.submit_time ? new Date(sub.submit_time).toLocaleDateString() : 'N/A'}</span>
+                           <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                           <span className={sub.score >= 60 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>{sub.score >= 60 ? 'PASSED' : 'FAILED'}</span>
                         </div>
                       </div>
                     </div>
-                    <button onClick={() => window.location.href = `/student/result/${sub.id}`} className="px-8 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all hover:bg-orange-600 active:scale-95 shadow-xl">
-                        ANALYSIS →
+                    <button 
+                      onClick={() => window.location.href = `/student/result/${sub.id}`} 
+                      className="px-5 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-[11px] font-bold uppercase tracking-widest transition-all active:scale-95"
+                    >
+                        View Analysis
                     </button>
                   </div>
                 ))
               ) : (
-                <div className="bg-gray-50/50 rounded-[3rem] border-4 border-dashed border-gray-100 p-24 text-center space-y-6">
-                   <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto shadow-inner">
-                      <Activity className="w-10 h-10 text-gray-200" />
-                   </div>
-                   <p className="text-gray-400 font-black uppercase tracking-[0.4em] text-[11px] italic">Neutral state: No intelligence fragments found.</p>
+                <div className="bg-slate-50/50 border border-slate-200 border-dashed p-16 text-center">
+                   <FileText className="w-8 h-8 text-slate-300 mx-auto mb-4" />
+                   <p className="text-slate-400 text-sm italic">No recent assessment records found.</p>
                 </div>
               )}
            </div>
         </div>
 
-        {/* Global Deployment Sidebar */}
-        <div className="lg:col-span-4 space-y-10">
-           <section className="bg-white p-10 rounded-[3.5rem] border-2 border-gray-50 shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 opacity-5 -rotate-12 transition-transform group-hover:rotate-0 duration-1000">
-                <Layout size={200} />
+        {/* Action Sidebar */}
+        <div className="space-y-6">
+           <section className="bg-white p-6 border border-slate-200 shadow-sm space-y-6">
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                 <div className="w-10 h-10 bg-slate-50 text-blue-900 rounded flex items-center justify-center"><BookOpen className="w-5 h-5" /></div>
+                 <h3 className="text-lg font-bold text-slate-800">Academics</h3>
               </div>
-              <div className="relative z-10 space-y-8">
-                <div className="flex items-center gap-4">
-                   <div className="w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-orange-100"><Zap className="w-8 h-8" /></div>
-                   <div>
-                      <h3 className="text-2xl font-black font-display text-gray-900 uppercase italic leading-none">Intelligence</h3>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Operational Cluster</p>
-                   </div>
-                </div>
-                <p className="text-gray-500 font-bold italic leading-relaxed text-sm">Synchronize with pending assessment protocols to enhance your institutional proficiency and global standing.</p>
-                <Link to="/student/exams" className="w-full bg-black text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 transition-all hover:bg-orange-500 shadow-2xl active:scale-95">
-                   INITIALIZE EXAM <ArrowRight className="w-5 h-5" />
-                </Link>
-              </div>
+              <p className="text-slate-500 text-sm italic font-normal leading-relaxed">Proceed to the upcoming assessments menu to begin your institutional examinations.</p>
+              <Link to="/student/exams" className="block w-full bg-blue-900 text-white text-center py-3 text-[11px] font-bold uppercase tracking-widest hover:bg-blue-800 transition-colors">
+                 Start Examination <ArrowRight className="w-4 h-4 inline ml-2" />
+              </Link>
            </section>
 
-           <section className="p-10 space-y-6">
-             <div className="flex items-center gap-4 mb-4">
-                <Trophy className="w-6 h-6 text-orange-500" />
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.5em] italic">Top Performers</h3>
-             </div>
-             <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100 transition-all hover:scale-[1.05]">
-                     <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center font-black text-[10px] text-gray-400 shadow-sm">{i}</div>
-                        <span className="text-xs font-black text-gray-700 uppercase tracking-tighter">Candidate {100 + i}</span>
-                     </div>
-                     <span className="text-[10px] font-black text-orange-500">98% PR</span>
-                  </div>
-                ))}
-             </div>
+           <section className="bg-slate-50 p-6 border border-slate-200 space-y-5">
+              <div className="flex items-center gap-3 mb-2">
+                 <Trophy className="w-5 h-5 text-blue-900" />
+                 <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Global Rankings</h3>
+              </div>
+              <div className="space-y-3">
+                 {[1, 2, 3].map(i => (
+                   <div key={i} className="flex items-center justify-between p-3 bg-white border border-slate-100 shadow-sm">
+                      <div className="flex items-center gap-3">
+                         <div className="text-[10px] font-bold text-slate-300 w-4">0{i}</div>
+                         <span className="text-xs font-bold text-slate-700">Candidate ID #{10024 + i}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-900">TOP RANK</span>
+                   </div>
+                 ))}
+              </div>
            </section>
         </div>
       </div>

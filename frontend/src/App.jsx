@@ -88,6 +88,7 @@ function App() {
                     <Route path="/students" element={<StudentManagement />} />
                     <Route path="/exams/review/:id" element={<AttemptReview />} />
                     <Route path="/settings" element={<AdminSettings />} />
+                    <Route path="/profile" element={<Profile />} />
                   </Routes>
                 </MainLayout>
               </ProtectedRoute>
